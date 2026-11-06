@@ -8,7 +8,6 @@ import { dateField, fileField, num, str } from "../parse";
 import { createAdminClient } from "../supabase/admin";
 import type { createClient } from "../supabase/server";
 import { formatRupiah, jakartaToday } from "../utils";
-
 type Db = Awaited<ReturnType<typeof createClient>>;
 
 const BUCKET = "bukti-transfer";
