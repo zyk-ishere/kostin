@@ -75,15 +75,7 @@ export default async function LoginPage({
           </ActionForm>
         </div>
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-slate-500">
-          Akun admin dibuat lewat Supabase → Authentication → Users.
-          <br />
-          Belum menyiapkan database?{" "}
-          <Link href="/setup" className="link">
-            Lihat panduan setup
-          </Link>
-          .
-        </p>
+        
       </div>
     </div>
   );
