@@ -355,9 +355,7 @@ export default async function TagihanDetailPage({
                     <input
                       className="input"
                       name="jumlah"
-                      type="number"
-                      min={1}
-                      step={1000}
+                      type="text"
                       defaultValue={invoice.sisa}
                       required
                     />
