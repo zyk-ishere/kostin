@@ -38,11 +38,12 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
 2. Buka **SQL Editor → New query**, jalankan seluruh isi
    [`supabase/schema.sql`](./supabase/schema.sql). File ini membuat tabel, RLS
    per pemilik, bucket storage `bukti-transfer`, dan trigger yang otomatis
-   membuat pengaturan untuk setiap akun baru.
+   membuat pengaturan + 10 kamar untuk setiap akun baru.
 3. *(Opsional)* Jalankan [`supabase/seed.sql`](./supabase/seed.sql) untuk mengisi
    8 kamar + 5 penghuni + tagihan contoh ke akun pertama.
 4. Buat akun lewat **Authentication → Users → Add user** (isi email & password,
-   lalu konfirmasi user). Setiap akun otomatis mendapat dashboard sendiri.
+   lalu konfirmasi user). Setiap akun otomatis mendapat dashboard sendiri
+   **plus 10 kamar awal** (01–10, Standar, Rp600.000, status kosong).
    Halaman **`/daftar`** hanya menampilkan kontak admin WhatsApp
    **0896-7510-1657**, karena akun dibuat manual dan berbayar.
 
@@ -131,6 +132,7 @@ src/
 supabase/
   schema.sql               # instalasi baru: tabel + RLS + storage + trigger
   migration-multi-user.sql # migrasi database single-admin ke multi-akun
+  migration-default-rooms.sql # 10 kamar otomatis untuk akun baru
   seed.sql                 # data contoh (opsional)
 scripts/
   migrate-storage.mjs      # pindahkan bukti lama ke folder pemilik
@@ -198,7 +200,7 @@ Status tagihan tidak disimpan, tapi diturunkan dari total − pembayaran valid:
 | Login selalu bilang "Email atau password salah" | Pastikan `NEXT_PUBLIC_SUPABASE_ANON_KEY` valid. Kalau log Supabase/server berbunyi `Invalid API key`, salin ulang **publishable/anon key** dari Project Settings → API Keys (bukan key yang sudah di-revoke), lalu restart dev server. |
 | `relation "public.settings" does not exist` | `supabase/schema.sql` belum dijalankan. |
 | `column "owner_id" does not exist` | Database masih versi single-admin. Jalankan `supabase/migration-multi-user.sql`. |
-| Akun baru tidak punya dashboard | Trigger `on_auth_user_created_kostin` belum ada. Jalankan ulang bagian trigger di `schema.sql` / migration. |
+| Akun baru tidak punya dashboard/kamar | Trigger `on_auth_user_created_kostin` belum ada. Jalankan ulang bagian trigger di `schema.sql` / `migration-default-rooms.sql`. |
 | Upload bukti gagal | Bucket `bukti-transfer` belum ada / policy storage belum dibuat. Jalankan ulang bagian storage di `schema.sql`. |
 | Halaman `/bayar/[id]` bilang belum aktif | `SUPABASE_SERVICE_ROLE_KEY` belum diisi. |
 | Data tidak muncul setelah insert | Cek RLS aktif dan user sudah login; lihat log di Supabase. |

@@ -164,7 +164,7 @@ create policy "owner_payments" on public.payments
   with check (owner_id = (select auth.uid()));
 
 -- -------------------------------------------------------------
--- 7. Akun baru otomatis mendapat baris settings sendiri
+-- 7. Akun baru otomatis mendapat pengaturan + 10 kamar sendiri
 -- -------------------------------------------------------------
 create or replace function public.handle_new_user_kostin()
 returns trigger
@@ -176,6 +176,13 @@ begin
   insert into public.settings (owner_id)
   values (new.id)
   on conflict (owner_id) do nothing;
+
+  -- 10 kamar standar sebagai titik awal. Pemilik bisa mengubah/menghapusnya.
+  insert into public.rooms (owner_id, nomor, tipe, harga_sewa, fasilitas, status)
+  select new.id, lpad(g::text, 2, '0'), 'Standar', 600000, '', 'kosong'
+  from generate_series(1, 10) as t(g)
+  on conflict (owner_id, nomor) do nothing;
+
   return new;
 end;
 $$;

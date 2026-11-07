@@ -100,7 +100,7 @@ left join public.settings s on s.owner_id = u.id
 where s.owner_id is null;
 
 -- -------------------------------------------------------------
--- 7. Akun baru otomatis punya dashboard (settings) sendiri
+-- 7. Akun baru otomatis punya dashboard + 10 kamar sendiri
 -- -------------------------------------------------------------
 create or replace function public.handle_new_user_kostin()
 returns trigger
@@ -112,6 +112,13 @@ begin
   insert into public.settings (owner_id)
   values (new.id)
   on conflict (owner_id) do nothing;
+
+  -- 10 kamar standar sebagai titik awal. Pemilik bisa mengubah/menghapusnya.
+  insert into public.rooms (owner_id, nomor, tipe, harga_sewa, fasilitas, status)
+  select new.id, lpad(g::text, 2, '0'), 'Standar', 600000, '', 'kosong'
+  from generate_series(1, 10) as t(g)
+  on conflict (owner_id, nomor) do nothing;
+
   return new;
 end;
 $$;
