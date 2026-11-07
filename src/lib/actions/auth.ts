@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "../supabase/server";
+import { safeNext } from "../utils";
 import type { ActionState } from "../action-state";
 import { str } from "../parse";
 
@@ -32,9 +33,7 @@ export async function login(
     return { ok: false, message: "Email atau password salah." };
   }
 
-  const next = str(formData, "next");
-  const target =
-    next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const target = safeNext(str(formData, "next"));
 
   redirect(target);
 }

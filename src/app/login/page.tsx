@@ -7,6 +7,7 @@ import { login } from "@/lib/actions/auth";
 import { ADMIN_WHATSAPP_DISPLAY, adminWhatsAppUrl } from "@/lib/contact";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Masuk" };
 
@@ -20,12 +21,7 @@ export default async function LoginPage({
   if (!isSupabaseConfigured()) redirect("/setup");
 
   const query = await searchParams;
-  const next =
-    typeof query.next === "string" &&
-    query.next.startsWith("/") &&
-    !query.next.startsWith("//")
-      ? query.next
-      : "/";
+  const next = safeNext(query.next);
 
   const supabase = await createClient();
   const {

@@ -81,6 +81,17 @@ export function invoiceStatus(invoice: {
   return "belum";
 }
 
+/** Validasi redirect internal: hanya path relatif yang aman. */
+export function safeNext(value: string | null | undefined): string {
+  if (typeof value !== "string" || !value) return "/";
+  if (!value.startsWith("/")) return "/";
+  if (value.startsWith("//")) return "/";
+  if (value.includes("\\")) return "/";
+  if (value.includes("://")) return "/";
+  if (/[ \t\r\n]/.test(value)) return "/";
+  return value;
+}
+
 /** Nomor HP Indonesia -> format wa.me (62xxx). */
 export function waNumber(noHp: string) {
   const digits = (noHp || "").replace(/\D/g, "");
