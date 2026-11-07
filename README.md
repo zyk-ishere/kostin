@@ -6,7 +6,7 @@ penghuni, tagihan bulanan, pencatatan pembayaran, dan verifikasi bukti transfer.
 **Multi-akun:** setiap akun punya dashboard, kamar, penghuni, dan tagihan
 sendiri. Akun lain tidak bisa melihat atau mengubah data tersebut. Akun dibuat
 oleh admin (berbayar) — calon pengguna menghubungi admin lewat WhatsApp
-**0823-8337-7494**; tidak ada pendaftaran mandiri.
+**0896-7510-1657**; tidak ada pendaftaran mandiri.
 
 Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, dan
 **Supabase** (Postgres, Auth, Storage).
@@ -44,7 +44,7 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
 4. Buat akun lewat **Authentication → Users → Add user** (isi email & password,
    lalu konfirmasi user). Setiap akun otomatis mendapat dashboard sendiri.
    Halaman **`/daftar`** hanya menampilkan kontak admin WhatsApp
-   **0823-8337-7494**, karena akun dibuat manual dan berbayar.
+   **0896-7510-1657**, karena akun dibuat manual dan berbayar.
 
 > **Database lama (single-admin):** jangan jalankan `schema.sql`. Jalankan
 > [`supabase/migration-multi-user.sql`](./supabase/migration-multi-user.sql) di
