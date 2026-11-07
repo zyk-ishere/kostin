@@ -3,6 +3,9 @@
 Aplikasi web untuk mengelola satu lokasi kost (hingga puluhan kamar): data kamar,
 penghuni, tagihan bulanan, pencatatan pembayaran, dan verifikasi bukti transfer.
 
+**Multi-akun:** setiap akun yang mendaftar punya dashboard, kamar, penghuni, dan
+tagihan sendiri. Akun lain tidak bisa melihat atau mengubah data tersebut.
+
 Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, dan
 **Supabase** (Postgres, Auth, Storage).
 
@@ -31,13 +34,20 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
 
 1. Buat project gratis di [supabase.com/dashboard](https://supabase.com/dashboard).
 2. Buka **SQL Editor → New query**, jalankan seluruh isi
-   [`supabase/schema.sql`](./supabase/schema.sql). File ini membuat tabel, RLS,
-   bucket storage `bukti-transfer`, dan baris pengaturan awal.
+   [`supabase/schema.sql`](./supabase/schema.sql). File ini membuat tabel, RLS
+   per pemilik, bucket storage `bukti-transfer`, dan trigger yang otomatis
+   membuat pengaturan untuk setiap akun baru.
 3. *(Opsional)* Jalankan [`supabase/seed.sql`](./supabase/seed.sql) untuk mengisi
-   8 kamar + 5 penghuni + tagihan contoh supaya dashboard langsung terlihat berisi.
-4. Buat akun admin di **Authentication → Users → Add user**. Isi email & password,
-   dan pastikan user langsung terkonfirmasi (matikan “Confirm email” atau klik
-   konfirmasi pada user tersebut).
+   8 kamar + 5 penghuni + tagihan contoh ke akun pertama.
+4. Buat akun lewat halaman **`/daftar`** di aplikasi, atau lewat
+   **Authentication → Users → Add user**. Setiap akun otomatis mendapat
+   dashboard sendiri.
+
+> **Database lama (single-admin):** jangan jalankan `schema.sql`. Jalankan
+> [`supabase/migration-multi-user.sql`](./supabase/migration-multi-user.sql) di
+> SQL Editor. Di bagian atas file ada satu email pemilik data lama yang bisa
+> kamu ganti. Setelah SQL selesai, jalankan `node scripts/migrate-storage.mjs`
+> agar bukti transfer lama ikut pindah ke folder pemiliknya.
 
 ## 2. Isi environment variable
 
@@ -68,7 +78,7 @@ npm run dev
 ```
 
 Buka [http://localhost:3000](http://localhost:3000). Kalau kredensial belum lengkap,
-aplikasi otomatis menampilkan halaman panduan `/setup`.
+aplikasi mengarahkan ke halaman panduan setup.
 
 ---
 
@@ -105,8 +115,9 @@ src/
       pembayaran/          # verifikasi bukti transfer
       laporan/             # rekap bulanan + ekspor CSV
       pengaturan/          # identitas kost, rekening, jatuh tempo, denda
-    login/                 # login admin
-    setup/                 # panduan saat env belum diisi
+    login/                 # login
+    daftar/                # pendaftaran akun baru
+    auth/callback/         # konfirmasi email Supabase
     bayar/[id]/            # halaman pembayaran publik (tanpa login)
     api/laporan/export/    # ekspor CSV
   components/              # UI, form, sidebar
@@ -115,8 +126,11 @@ src/
     data.ts                # query baca ke Supabase
     supabase/              # client server & admin (service role)
 supabase/
-  schema.sql               # tabel + RLS + storage
+  schema.sql               # instalasi baru: tabel + RLS + storage + trigger
+  migration-multi-user.sql # migrasi database single-admin ke multi-akun
   seed.sql                 # data contoh (opsional)
+scripts/
+  migrate-storage.mjs      # pindahkan bukti lama ke folder pemilik
 ```
 
 ---
@@ -125,11 +139,14 @@ supabase/
 
 | Tabel | Isi |
 | --- | --- |
-| `settings` | Satu baris: nama kost, rekening, jatuh tempo, denda |
-| `rooms` | Kamar + harga sewa + status |
+| `settings` | Satu baris **per akun**: nama kost, rekening, jatuh tempo, denda |
+| `rooms` | Kamar + harga sewa + status (nomor unik per akun) |
 | `tenants` | Penghuni + kamar + tanggal masuk/keluar + deposit |
 | `invoices` | Tagihan per penghuni per bulan; `total` dihitung otomatis oleh database |
 | `payments` | Pembayaran/bukti transfer; `valid` dihitung sebagai pelunasan |
+
+Setiap tabel punya kolom `owner_id` yang otomatis diisi `auth.uid()`. RLS hanya
+mengizinkan pemilik baris membaca/mengubah datanya.
 
 Status tagihan tidak disimpan, tapi diturunkan dari total − pembayaran valid:
 
@@ -145,20 +162,24 @@ Status tagihan tidak disimpan, tapi diturunkan dari total − pembayaran valid:
 1. Push project ke GitHub, import ke Vercel.
 2. Tambahkan keempat environment variable di atas pada Project Settings → Environment
    Variables (gunakan nilai production).
-3. Set `NEXT_PUBLIC_APP_URL` ke domain Vercel/hosting kamu, lalu redeploy.
-4. Di Supabase **Authentication → URL Configuration**, tambahkan domain tersebut ke
-   *Site URL* dan *Redirect URLs*.
+3. Set `NEXT_PUBLIC_APP_URL` ke domain produksi (mis. `https://www.konstin.my.id`),
+   lalu redeploy.
+4. Di Supabase **Authentication → URL Configuration**, isi *Site URL* dengan domain
+   produksi dan tambahkan `https://domain-kamu/auth/callback` pada *Redirect URLs*.
+5. Kalau memakai konfirmasi email, pastikan template email memakai
+   `{{ .ConfirmationURL }}` agar diarahkan ke `/auth/callback`.
 
 ---
 
 ## Keamanan
 
-- Semua tabel memakai RLS; hanya user yang login (`authenticated`) yang bisa membaca
-  dan menulis.
+- Semua tabel memakai RLS berbasis `owner_id`; user hanya bisa membaca dan menulis
+  baris miliknya sendiri. Akun lain tidak bisa membuka dashboard, tagihan, atau
+  bukti transfermu.
 - Service role key hanya dipakai di server pada halaman `/bayar/[id]`, sehingga
   penghuni hanya bisa melihat satu tagihan yang link-nya mereka pegang (UUID acak).
-- Bucket `bukti-transfer` bersifat privat. Admin melihat bukti lewat *signed URL*
-  berumur 1 jam.
+- Bucket `bukti-transfer` bersifat privat. File disimpan di folder
+  `<owner_id>/<invoice_id>/`, dan admin melihat bukti lewat *signed URL* berumur 1 jam.
 - Setiap Server Action memverifikasi sesi lewat `requireUser()` sebelum mengubah data.
 - Tetap disarankan mengganti password admin secara berkala dan tidak membagikan link
   dashboard.
@@ -173,6 +194,8 @@ Status tagihan tidak disimpan, tapi diturunkan dari total − pembayaran valid:
 | Login berhasil tapi kembali ke halaman login | Cookie diblokir, atau `NEXT_PUBLIC_SUPABASE_URL` salah. Cek console server. |
 | Login selalu bilang "Email atau password salah" | Pastikan `NEXT_PUBLIC_SUPABASE_ANON_KEY` valid. Kalau log Supabase/server berbunyi `Invalid API key`, salin ulang **publishable/anon key** dari Project Settings → API Keys (bukan key yang sudah di-revoke), lalu restart dev server. |
 | `relation "public.settings" does not exist` | `supabase/schema.sql` belum dijalankan. |
+| `column "owner_id" does not exist` | Database masih versi single-admin. Jalankan `supabase/migration-multi-user.sql`. |
+| Akun baru tidak punya dashboard | Trigger `on_auth_user_created_kostin` belum ada. Jalankan ulang bagian trigger di `schema.sql` / migration. |
 | Upload bukti gagal | Bucket `bukti-transfer` belum ada / policy storage belum dibuat. Jalankan ulang bagian storage di `schema.sql`. |
 | Halaman `/bayar/[id]` bilang belum aktif | `SUPABASE_SERVICE_ROLE_KEY` belum diisi. |
 | Data tidak muncul setelah insert | Cek RLS aktif dan user sudah login; lihat log di Supabase. |

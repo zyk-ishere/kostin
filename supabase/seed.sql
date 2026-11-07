@@ -1,12 +1,13 @@
 -- =============================================================
 --  KOSTIN — Data contoh (opsional)
 --  Jalankan SETELAH schema.sql kalau ingin langsung melihat
---  dashboard berisi data. Aman dijalankan berulang.
+--  dashboard berisi data. Data diberikan ke akun pertama.
+--  Aman dijalankan berulang.
 -- =============================================================
 
 -- ---------- Kamar ----------
-insert into public.rooms (nomor, tipe, harga_sewa, fasilitas, status)
-select v.nomor, v.tipe, v.harga_sewa, v.fasilitas, v.status
+insert into public.rooms (owner_id, nomor, tipe, harga_sewa, fasilitas, status)
+select o.id, v.nomor, v.tipe, v.harga_sewa, v.fasilitas, v.status
 from (values
   ('101', 'Standar',  750000,  'Kasur, lemari, kipas angin',        'terisi'),
   ('102', 'Standar',  750000,  'Kasur, lemari, kipas angin',        'terisi'),
@@ -17,11 +18,14 @@ from (values
   ('107', 'Premium',  1400000, 'AC, kasur springbed, TV, kamar mandi dalam', 'kosong'),
   ('108', 'Premium',  1400000, 'AC, kasur springbed, TV, kamar mandi dalam', 'perbaikan')
 ) as v(nomor, tipe, harga_sewa, fasilitas, status)
-where not exists (select 1 from public.rooms r where r.nomor = v.nomor);
+cross join (select id from auth.users order by created_at limit 1) o
+where not exists (
+  select 1 from public.rooms r where r.owner_id = o.id and r.nomor = v.nomor
+);
 
 -- ---------- Penghuni ----------
-insert into public.tenants (nama, no_hp, email, room_id, tanggal_masuk, deposit, status)
-select v.nama, v.no_hp, v.email, r.id, v.tanggal_masuk, v.deposit, 'aktif'
+insert into public.tenants (owner_id, nama, no_hp, email, room_id, tanggal_masuk, deposit, status)
+select o.id, v.nama, v.no_hp, v.email, r.id, v.tanggal_masuk, v.deposit, 'aktif'
 from (values
   ('Rizky Pratama',  '081234567801', 'rizky@example.com',  '101', current_date - interval '5 months', 500000),
   ('Nadia Putri',    '081234567802', 'nadia@example.com',  '102', current_date - interval '3 months', 500000),
@@ -29,12 +33,16 @@ from (values
   ('Sinta Maharani', '081234567804', 'sinta@example.com',  '104', current_date - interval '8 months', 750000),
   ('Fajar Nugroho',  '081234567805', 'fajar@example.com',  '106', current_date - interval '2 months', 750000)
 ) as v(nama, no_hp, email, nomor_kamar, tanggal_masuk, deposit)
-join public.rooms r on r.nomor = v.nomor_kamar
-where not exists (select 1 from public.tenants t where t.nama = v.nama);
+cross join (select id from auth.users order by created_at limit 1) o
+join public.rooms r on r.owner_id = o.id and r.nomor = v.nomor_kamar
+where not exists (
+  select 1 from public.tenants t where t.owner_id = o.id and t.nama = v.nama
+);
 
 -- ---------- Tagihan bulan ini ----------
-insert into public.invoices (tenant_id, room_id, periode, jatuh_tempo, sewa, listrik, air, catatan)
+insert into public.invoices (owner_id, tenant_id, room_id, periode, jatuh_tempo, sewa, listrik, air, catatan)
 select
+  t.owner_id,
   t.id,
   t.room_id,
   date_trunc('month', current_date)::date,
@@ -50,8 +58,8 @@ on conflict (tenant_id, periode) do nothing;
 
 -- ---------- Pembayaran contoh ----------
 -- Satu tagihan sudah lunas.
-insert into public.payments (invoice_id, jumlah, metode, tanggal_bayar, pengirim, status, verified_by, verified_at, catatan)
-select i.id, i.total, 'transfer', current_date - interval '2 days', 'Rizky Pratama', 'valid', 'seed@kostin.local', now(), 'seed'
+insert into public.payments (owner_id, invoice_id, jumlah, metode, tanggal_bayar, pengirim, status, verified_by, verified_at, catatan)
+select i.owner_id, i.id, i.total, 'transfer', current_date - interval '2 days', 'Rizky Pratama', 'valid', 'seed@kostin.local', now(), 'seed'
 from public.invoices i
 join public.tenants t on t.id = i.tenant_id
 where t.nama = 'Rizky Pratama'
@@ -61,8 +69,8 @@ where t.nama = 'Rizky Pratama'
   );
 
 -- Satu tagihan menunggu verifikasi.
-insert into public.payments (invoice_id, jumlah, metode, tanggal_bayar, pengirim, status, catatan)
-select i.id, i.total, 'transfer', current_date, 'Nadia Putri', 'menunggu', 'seed'
+insert into public.payments (owner_id, invoice_id, jumlah, metode, tanggal_bayar, pengirim, status, catatan)
+select i.owner_id, i.id, i.total, 'transfer', current_date, 'Nadia Putri', 'menunggu', 'seed'
 from public.invoices i
 join public.tenants t on t.id = i.tenant_id
 where t.nama = 'Nadia Putri'

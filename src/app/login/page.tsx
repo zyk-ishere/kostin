@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   if (!isSupabaseConfigured()) redirect("/setup");
 
@@ -50,6 +50,12 @@ export default async function LoginPage({
         </div>
 
         <div className="card p-6 sm:p-8">
+          {query.error === "konfirmasi" ? (
+            <p className="mb-4 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
+              Link konfirmasi tidak valid atau sudah kedaluwarsa. Coba masuk,
+              atau minta link baru dengan mendaftar ulang.
+            </p>
+          ) : null}
           <ActionForm action={login} submitLabel="Masuk" pendingLabel="Memeriksa…">
             <input type="hidden" name="next" value={next} />
             <Field label="Email">
@@ -75,7 +81,15 @@ export default async function LoginPage({
           </ActionForm>
         </div>
 
-        
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Belum punya akun?{" "}
+          <Link
+            href="/daftar"
+            className="font-semibold text-emerald-700 hover:underline"
+          >
+            Daftar gratis
+          </Link>
+        </p>
       </div>
     </div>
   );

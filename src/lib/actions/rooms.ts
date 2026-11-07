@@ -19,7 +19,7 @@ export async function saveRoom(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const id = str(formData, "id");
   const nomor = str(formData, "nomor");
@@ -41,6 +41,7 @@ export async function saveRoom(
     harga_sewa: harga,
     fasilitas,
     status,
+    ...(id ? {} : { owner_id: user.id }),
   };
 
   if (id) {

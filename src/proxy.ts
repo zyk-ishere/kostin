@@ -6,7 +6,7 @@ import {
   supabaseUrl,
 } from "@/lib/supabase/config";
 
-const PUBLIC_PREFIXES = ["/login", "/setup", "/bayar"];
+const PUBLIC_PREFIXES = ["/login", "/daftar", "/auth", "/setup", "/bayar"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PREFIXES.some(
@@ -59,7 +59,7 @@ export async function proxy(request: NextRequest) {
     return withCookies(NextResponse.redirect(url), response);
   }
 
-  if (pathname === "/login" || pathname === "/setup") {
+  if (pathname === "/login" || pathname === "/daftar" || pathname === "/setup") {
     return withCookies(NextResponse.redirect(new URL("/", request.url)), response);
   }
 

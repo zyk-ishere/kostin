@@ -9,7 +9,7 @@ export async function saveSettings(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const namaKost = str(formData, "nama_kost");
   if (!namaKost) {
@@ -19,7 +19,7 @@ export async function saveSettings(
   const jatuhTempo = Math.min(28, Math.max(1, num(formData, "jatuh_tempo_hari", 5)));
 
   const payload = {
-    id: 1,
+    owner_id: user.id,
     nama_kost: namaKost,
     alamat: str(formData, "alamat"),
     bank: str(formData, "bank"),
@@ -30,7 +30,9 @@ export async function saveSettings(
     denda_per_hari: Math.max(0, num(formData, "denda_per_hari")),
   };
 
-  const { error } = await supabase.from("settings").upsert(payload);
+  const { error } = await supabase
+    .from("settings")
+    .upsert(payload, { onConflict: "owner_id" });
 
   if (error) return { ok: false, message: error.message };
 

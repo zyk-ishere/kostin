@@ -34,7 +34,7 @@ export async function saveTenant(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const id = str(formData, "id");
   const nama = str(formData, "nama");
@@ -80,6 +80,7 @@ export async function saveTenant(
     deposit,
     status,
     catatan,
+    ...(id ? {} : { owner_id: user.id }),
   };
 
   if (id) {

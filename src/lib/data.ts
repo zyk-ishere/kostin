@@ -55,7 +55,7 @@ export async function getSettings(): Promise<Settings | null> {
   const { data } = await supabase
     .from("settings")
     .select("*")
-    .eq("id", 1)
+    .limit(1)
     .maybeSingle();
   return one<Settings>(data);
 }
@@ -318,20 +318,23 @@ export async function getPublicInvoice(
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
 
   const supabase = createAdminClient();
-  const [invoiceRes, settingsRes] = await Promise.all([
-    supabase
-      .from("invoices")
-      .select("*, tenant:tenants(nama,no_hp), room:rooms(nomor), payments(*)")
-      .eq("id", id)
-      .maybeSingle(),
-    supabase.from("settings").select("*").eq("id", 1).maybeSingle(),
-  ]);
+  const { data: invoiceData } = await supabase
+    .from("invoices")
+    .select("*, tenant:tenants(nama,no_hp), room:rooms(nomor), payments(*)")
+    .eq("id", id)
+    .maybeSingle();
 
-  const raw = one<RawInvoice>(invoiceRes.data);
+  const raw = one<RawInvoice>(invoiceData);
   if (!raw) return null;
+
+  const { data: settingsData } = await supabase
+    .from("settings")
+    .select("*")
+    .eq("owner_id", raw.owner_id)
+    .maybeSingle();
 
   return {
     invoice: toInvoiceView(raw),
-    settings: one<Settings>(settingsRes.data),
+    settings: one<Settings>(settingsData),
   };
 }

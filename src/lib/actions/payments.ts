@@ -22,12 +22,14 @@ const METHODS = ["transfer", "tunai", "qris", "lainnya"] as const;
 
 type InvoiceForPayment = {
   id: string;
+  owner_id: string;
   total: number;
   payments: { jumlah: number; status: string }[] | null;
 };
 
 async function uploadBukti(
   client: Db,
+  ownerId: string,
   invoiceId: string,
   file: File | null,
 ): Promise<{ path: string | null; error?: string }> {
@@ -45,7 +47,7 @@ async function uploadBukti(
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 5) || "jpg";
-  const path = `${invoiceId}/${crypto.randomUUID()}.${extension}`;
+  const path = `${ownerId}/${invoiceId}/${crypto.randomUUID()}.${extension}`;
 
   const { error } = await client.storage.from(BUCKET).upload(path, file, {
     contentType: file.type,
@@ -90,7 +92,7 @@ export async function recordPayment(
 
   const { data } = await supabase
     .from("invoices")
-    .select("id, total, payments(jumlah,status)")
+    .select("id, owner_id, total, payments(jumlah,status)")
     .eq("id", invoiceId)
     .maybeSingle();
 
@@ -108,10 +110,11 @@ export async function recordPayment(
     };
   }
 
-  const uploaded = await uploadBukti(supabase, invoiceId, bukti);
+  const uploaded = await uploadBukti(supabase, user.id, invoiceId, bukti);
   if (uploaded.error) return { ok: false, message: uploaded.error };
 
   const { error } = await supabase.from("payments").insert({
+    owner_id: user.id,
     invoice_id: invoiceId,
     jumlah,
     metode,
@@ -215,7 +218,7 @@ export async function submitPublicPayment(
 
   const { data } = await supabase
     .from("invoices")
-    .select("id, total, payments(jumlah,status)")
+    .select("id, owner_id, total, payments(jumlah,status)")
     .eq("id", invoiceId)
     .maybeSingle();
 
@@ -235,10 +238,11 @@ export async function submitPublicPayment(
     };
   }
 
-  const uploaded = await uploadBukti(supabase, invoiceId, bukti);
+  const uploaded = await uploadBukti(supabase, invoice.owner_id, invoiceId, bukti);
   if (uploaded.error) return { ok: false, message: uploaded.error };
 
   const { error } = await supabase.from("payments").insert({
+    owner_id: invoice.owner_id,
     invoice_id: invoiceId,
     jumlah,
     metode: "transfer",

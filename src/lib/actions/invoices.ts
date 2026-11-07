@@ -40,7 +40,7 @@ export async function generateInvoices(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const bulan = monthField(formData, "bulan") ?? currentMonth();
   const periode = `${bulan}-01`;
@@ -48,7 +48,7 @@ export async function generateInvoices(
   const { data: settings } = await supabase
     .from("settings")
     .select("jatuh_tempo_hari")
-    .eq("id", 1)
+    .limit(1)
     .maybeSingle();
 
   const dueDay = Number(
@@ -89,6 +89,7 @@ export async function generateInvoices(
       periode,
       jatuh_tempo: jatuhTempo,
       sewa: Number(tenant.room?.harga_sewa ?? 0),
+      owner_id: user.id,
     }));
 
   if (rows.length === 0) {
@@ -120,7 +121,7 @@ export async function applyLateFees(
   const { data: settings } = await supabase
     .from("settings")
     .select("denda_per_hari")
-    .eq("id", 1)
+    .limit(1)
     .maybeSingle();
 
   const dendaPerHari = Number(

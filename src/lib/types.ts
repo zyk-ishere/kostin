@@ -6,6 +6,7 @@ export type InvoiceStatus = "lunas" | "sebagian" | "telat" | "belum";
 
 export interface Settings {
   id: number;
+  owner_id: string;
   nama_kost: string;
   alamat: string;
   bank: string;
@@ -19,6 +20,7 @@ export interface Settings {
 
 export interface Room {
   id: string;
+  owner_id: string;
   nomor: string;
   tipe: string;
   harga_sewa: number;
@@ -33,6 +35,7 @@ export interface RoomWithTenant extends Room {
 
 export interface Tenant {
   id: string;
+  owner_id: string;
   nama: string;
   no_hp: string;
   email: string;
@@ -51,6 +54,7 @@ export interface TenantWithRoom extends Tenant {
 
 export interface Payment {
   id: string;
+  owner_id: string;
   invoice_id: string;
   jumlah: number;
   metode: PaymentMethod;
@@ -67,6 +71,7 @@ export interface Payment {
 
 export interface Invoice {
   id: string;
+  owner_id: string;
   tenant_id: string;
   room_id: string | null;
   periode: string;
