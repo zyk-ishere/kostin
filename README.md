@@ -3,8 +3,10 @@
 Aplikasi web untuk mengelola satu lokasi kost (hingga puluhan kamar): data kamar,
 penghuni, tagihan bulanan, pencatatan pembayaran, dan verifikasi bukti transfer.
 
-**Multi-akun:** setiap akun yang mendaftar punya dashboard, kamar, penghuni, dan
-tagihan sendiri. Akun lain tidak bisa melihat atau mengubah data tersebut.
+**Multi-akun:** setiap akun punya dashboard, kamar, penghuni, dan tagihan
+sendiri. Akun lain tidak bisa melihat atau mengubah data tersebut. Akun dibuat
+oleh admin (berbayar) — calon pengguna menghubungi admin lewat WhatsApp
+**0823-8337-7494**; tidak ada pendaftaran mandiri.
 
 Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, dan
 **Supabase** (Postgres, Auth, Storage).
@@ -39,9 +41,10 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
    membuat pengaturan untuk setiap akun baru.
 3. *(Opsional)* Jalankan [`supabase/seed.sql`](./supabase/seed.sql) untuk mengisi
    8 kamar + 5 penghuni + tagihan contoh ke akun pertama.
-4. Buat akun lewat halaman **`/daftar`** di aplikasi, atau lewat
-   **Authentication → Users → Add user**. Setiap akun otomatis mendapat
-   dashboard sendiri.
+4. Buat akun lewat **Authentication → Users → Add user** (isi email & password,
+   lalu konfirmasi user). Setiap akun otomatis mendapat dashboard sendiri.
+   Halaman **`/daftar`** hanya menampilkan kontak admin WhatsApp
+   **0823-8337-7494**, karena akun dibuat manual dan berbayar.
 
 > **Database lama (single-admin):** jangan jalankan `schema.sql`. Jalankan
 > [`supabase/migration-multi-user.sql`](./supabase/migration-multi-user.sql) di
@@ -116,7 +119,7 @@ src/
       laporan/             # rekap bulanan + ekspor CSV
       pengaturan/          # identitas kost, rekening, jatuh tempo, denda
     login/                 # login
-    daftar/                # pendaftaran akun baru
+    daftar/                # info pembuatan akun (hubungi admin via WhatsApp)
     auth/callback/         # konfirmasi email Supabase
     bayar/[id]/            # halaman pembayaran publik (tanpa login)
     api/laporan/export/    # ekspor CSV

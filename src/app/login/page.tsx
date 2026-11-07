@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Home } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { Field } from "@/components/ui";
 import { login } from "@/lib/actions/auth";
+import { ADMIN_WHATSAPP_DISPLAY, adminWhatsAppUrl } from "@/lib/contact";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -53,7 +53,7 @@ export default async function LoginPage({
           {query.error === "konfirmasi" ? (
             <p className="mb-4 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
               Link konfirmasi tidak valid atau sudah kedaluwarsa. Coba masuk,
-              atau minta link baru dengan mendaftar ulang.
+              atau hubungi admin lewat WhatsApp untuk link baru.
             </p>
           ) : null}
           <ActionForm action={login} submitLabel="Masuk" pendingLabel="Memeriksa…">
@@ -83,12 +83,17 @@ export default async function LoginPage({
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Belum punya akun?{" "}
-          <Link
-            href="/daftar"
+          <a
+            href={adminWhatsAppUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
             className="font-semibold text-emerald-700 hover:underline"
           >
-            Daftar gratis
-          </Link>
+            Hubungi admin via WhatsApp
+          </a>
+        </p>
+        <p className="mt-1 text-center text-xs text-slate-400">
+          Akun dibuat berbayar oleh admin · {ADMIN_WHATSAPP_DISPLAY}
         </p>
       </div>
     </div>
