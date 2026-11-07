@@ -309,6 +309,7 @@ export async function getDashboard(bulan: string): Promise<DashboardData> {
 export interface PublicInvoiceData {
   invoice: InvoiceView;
   settings: Settings | null;
+  qrisUrl: string | null;
 }
 
 export async function getPublicInvoice(
@@ -333,8 +334,19 @@ export async function getPublicInvoice(
     .eq("owner_id", raw.owner_id)
     .maybeSingle();
 
+  const settings = one<Settings>(settingsData);
+
+  let qrisUrl: string | null = null;
+  if (settings?.qris_path) {
+    const { data: signed } = await supabase.storage
+      .from("qris")
+      .createSignedUrl(settings.qris_path, 60 * 60);
+    qrisUrl = signed?.signedUrl ?? null;
+  }
+
   return {
     invoice: toInvoiceView(raw),
-    settings: one<Settings>(settingsData),
+    settings,
+    qrisUrl,
   };
 }

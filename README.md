@@ -25,7 +25,8 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
 - **Pembayaran** — catat pembayaran manual (transfer/tunai/QRIS), unggah bukti, dan
   verifikasi antrean bukti transfer.
 - **Halaman pembayaran publik** — penghuni membuka link khusus per tagihan, melihat
-  sisa tagihan & rekening tujuan, lalu mengunggah bukti transfer tanpa perlu akun.
+  sisa tagihan & rekening tujuan (atau QRIS bisnis admin), lalu mengunggah bukti
+  pembayaran tanpa perlu akun.
 - **Pengingat WhatsApp** — tombol yang membuka WhatsApp dengan pesan tagihan dan link
   pembayaran sudah terisi.
 - **Laporan** — rekap per bulan dan ekspor CSV.
@@ -44,6 +45,8 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, d
 4. Buat akun lewat **Authentication → Users → Add user** (isi email & password,
    lalu konfirmasi user). Setiap akun otomatis mendapat dashboard sendiri
    **plus 10 kamar awal** (01–10, Standar, Rp600.000, status kosong).
+   Di menu **Pengaturan**, admin bisa mengunggah **foto QRIS bisnis** yang
+   akan tampil di halaman pembayaran penyewa.
    Halaman **`/daftar`** hanya menampilkan kontak admin WhatsApp
    **0896-7510-1657**, karena akun dibuat manual dan berbayar.
 
@@ -132,6 +135,7 @@ src/
 supabase/
   schema.sql               # instalasi baru: tabel + RLS + storage + trigger
   migration-multi-user.sql # migrasi database single-admin ke multi-akun
+  migration-qris.sql       # kolom qris_path + bucket qris + trigger 10 kamar
   migration-default-rooms.sql # 10 kamar otomatis untuk akun baru
   seed.sql                 # data contoh (opsional)
 scripts/

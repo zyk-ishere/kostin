@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { Card, CardHeader, Field, PageHeader } from "@/components/ui";
-import { saveSettings } from "@/lib/actions/settings";
+import { saveQris, saveSettings } from "@/lib/actions/settings";
 import { getSettings } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Pengaturan" };
 
 export default async function PengaturanPage() {
   const settings = await getSettings();
+
+  let qrisUrl: string | null = null;
+  if (settings?.qris_path) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage
+      .from("qris")
+      .createSignedUrl(settings.qris_path, 60 * 60);
+    qrisUrl = data?.signedUrl ?? null;
+  }
 
   return (
     <div>
@@ -17,7 +27,8 @@ export default async function PengaturanPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
+        <Card>
           <CardHeader title="Identitas kost & rekening" />
           <div className="p-5 sm:p-6">
             <ActionForm action={saveSettings} submitLabel="Simpan pengaturan">
@@ -107,6 +118,65 @@ export default async function PengaturanPage() {
             </ActionForm>
           </div>
         </Card>
+
+        <Card>
+          <CardHeader title="QRIS pembayaran" />
+          <div className="p-5 sm:p-6">
+            <ActionForm
+              action={saveQris}
+              submitLabel="Simpan QRIS"
+              pendingLabel="Mengunggah…"
+            >
+              {qrisUrl ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrisUrl}
+                    alt="QRIS bisnis"
+                    className="mx-auto max-h-72 w-auto rounded-xl bg-white object-contain"
+                  />
+                  <a
+                    href={qrisUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-xs font-semibold text-emerald-700 hover:underline"
+                  >
+                    Buka gambar QRIS
+                  </a>
+                </div>
+              ) : (
+                <p className="rounded-xl bg-slate-50 px-3.5 py-3 text-sm text-slate-500 ring-1 ring-inset ring-slate-200">
+                  Belum ada QRIS. Unggah foto QRIS bisnis di bawah supaya
+                  penyewa bisa membayar dengan scan QRIS.
+                </p>
+              )}
+
+              <Field
+                label="Foto QRIS bisnis"
+                hint="JPG, PNG, atau WEBP (maks 5 MB). Gambar ini tampil di halaman pembayaran penyewa."
+              >
+                <input
+                  className="input file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold"
+                  name="qris"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                />
+              </Field>
+
+              {qrisUrl ? (
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input
+                    type="checkbox"
+                    name="hapus_qris"
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Hapus QRIS yang sekarang
+                </label>
+              ) : null}
+            </ActionForm>
+          </div>
+        </Card>
+        </div>
 
         <div className="space-y-4">
           <Card>

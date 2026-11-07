@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Building2, CheckCircle2, Home, ShieldCheck } from "lucide-react";
+import { Building2, CheckCircle2, Home, QrCode, ShieldCheck } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import {
   Card,
@@ -56,7 +56,7 @@ export default async function BayarPage({
   const data = await getPublicInvoice(id);
   if (!data) notFound();
 
-  const { invoice, settings } = data;
+  const { invoice, settings, qrisUrl } = data;
   const kostName = settings?.nama_kost ?? "Kost";
   const bulan = invoice.periode.slice(0, 7);
   const visiblePayments = invoice.payments.filter(
@@ -71,7 +71,7 @@ export default async function BayarPage({
           <Notice>
             <span className="inline-flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
-              Bukti transfer terkirim. Admin akan memverifikasi pembayaranmu.
+              Bukti pembayaran terkirim. Admin akan memverifikasi pembayaranmu.
             </span>
           </Notice>
         </div>
@@ -132,6 +132,41 @@ export default async function BayarPage({
         </div>
       </Card>
 
+      {qrisUrl ? (
+        <Card className="p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+              <QrCode className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                Bayar dengan QRIS
+              </p>
+              <p className="text-xs text-slate-500">
+                Scan pakai aplikasi bank atau e-wallet, lalu unggah bukti
+                pembayaran di bawah.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3 text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrisUrl}
+              alt="QRIS pembayaran"
+              className="mx-auto max-h-80 w-auto rounded-xl object-contain"
+            />
+            <a
+              href={qrisUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs font-semibold text-emerald-700 hover:underline"
+            >
+              Buka / simpan gambar QRIS
+            </a>
+          </div>
+        </Card>
+      ) : null}
+
       {settings?.nomor_rekening ? (
         <Card className="p-5">
           <div className="flex items-start gap-3">
@@ -139,7 +174,9 @@ export default async function BayarPage({
               <Building2 className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-xs text-slate-500">Transfer ke rekening</p>
+              <p className="text-xs text-slate-500">
+                {qrisUrl ? "Atau transfer ke rekening" : "Transfer ke rekening"}
+              </p>
               <p className="text-sm font-semibold text-slate-900">
                 {settings.bank} · {settings.nomor_rekening}
               </p>
@@ -197,7 +234,7 @@ export default async function BayarPage({
               Konfirmasi pembayaran
             </p>
             <p className="mt-0.5 text-xs text-slate-500">
-              Sudah transfer? Unggah buktinya di sini.
+              Sudah bayar? Unggah bukti pembayarannya di sini.
             </p>
           </div>
           <div className="p-5">
@@ -239,8 +276,8 @@ export default async function BayarPage({
               </div>
 
               <Field
-                label="Bukti transfer"
-                hint="Foto struk atau screenshot mutasi. JPG, PNG, WEBP, atau PDF (maks 5 MB)."
+                label="Bukti pembayaran"
+                hint="Screenshot QRIS/struk atau foto mutasi. JPG, PNG, WEBP, atau PDF (maks 5 MB)."
               >
                 <input
                   className="input file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold"

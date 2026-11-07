@@ -13,6 +13,7 @@ export interface Settings {
   nomor_rekening: string;
   atas_nama: string;
   whatsapp_admin: string;
+  qris_path: string | null;
   jatuh_tempo_hari: number;
   denda_per_hari: number;
   created_at: string;
